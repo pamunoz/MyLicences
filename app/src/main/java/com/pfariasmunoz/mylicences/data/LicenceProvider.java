@@ -129,6 +129,9 @@ public class LicenceProvider extends ContentProvider {
         return cursor;
     }
 
+    /**
+     * Insert new data into the provider with the given ContentValues.
+     */
     @Nullable
     @Override
     public Uri insert(
@@ -179,13 +182,88 @@ public class LicenceProvider extends ContentProvider {
         return ContentUris.withAppendedId(uri, id);
     }
 
+    /**
+     * Updates the data at the given selection and selection arguments, with the new ContentValues.
+     */
     @Override
-    public int delete(@NonNull Uri uri, @Nullable String s, @Nullable String[] strings) {
-        return 0;
+    public int update(
+            @NonNull Uri uri,
+            @Nullable ContentValues contentValues,
+            @Nullable String selection,
+            @Nullable String[] selectionArgs) {
+        final int match = sUriMatcher.match(uri);
+        switch (match) {
+            case LICENCES:
+                return updateLicence(uri, contentValues, selection, selectionArgs);
+            case LICENCE_ID:
+                // For the LICENCE_ID code, extract out the ID from the URI,
+                // so we know which row to update. Selection will be "_id=?" and selection
+                // arguments will be a String array containing the actual ID.
+                selection = LicenceEntry._ID + "=?";
+                selectionArgs = new String[] {String.valueOf(ContentUris.parseId(uri))};
+                return updateLicence(uri, contentValues, selection, selectionArgs);
+            default:
+                throw new IllegalArgumentException("Update is not supported for " + uri);
+        }
+    }
+
+    /**
+     * Update licences in the database with the given content values. Apply the changes to the rows
+     * specified in the selection and selection arguments (which could be 0 or 1 or more licences).
+     * Return the number of rows that were successfully updated.
+     */
+    private int updateLicence(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
+        // If the {@link LicenceEntry#COLUMN_LICENCE_NAME} key is present,
+        // check that the number value is not null.
+        if (values.containsKey(LicenceEntry.COLUMN_LICENCE_NUMBER)) {
+            String number = values.getAsString(LicenceEntry.COLUMN_LICENCE_NUMBER);
+            checkForNull(number, "Licence requires a number");
+        }
+
+        // If the {@link LicenceEntry#COLUMN_LICENCE_DURATION} key is present,
+        // check that the duration value is not null.
+        if (values.containsKey(LicenceEntry.COLUMN_LICENCE_DURATION)) {
+            Integer duration = values.getAsInteger(LicenceEntry.COLUMN_LICENCE_DURATION);
+            checkForNull(duration, "Licence requires a duration");
+        }
+
+        // If the {@link LicenceEntry#COLUMN_LICENCE_START_DATE} key is present,
+        // check that the start date value is not null.
+        if (values.containsKey(LicenceEntry.COLUMN_LICENCE_START_DATE)) {
+            String startDate = values.getAsString(LicenceEntry.COLUMN_LICENCE_START_DATE);
+            checkForNull(startDate, "Licence requires a start date");
+        }
+
+        // If the {@link LicenceEntry#COLUMN_LICENCE_END_DATE} key is present,
+        // check that the end date value is not null.
+        if (values.containsKey(LicenceEntry.COLUMN_LICENCE_END_DATE)) {
+            String endDate = values.getAsString(LicenceEntry.COLUMN_LICENCE_END_DATE);
+            checkForNull(endDate, "Licence requires a end date");
+        }
+
+        // If there are no values to update, then don't try to update the database
+        if (values.size() == 0) {
+            return 0;
+        }
+
+        // Otherwise, get writeable database to update the data
+        SQLiteDatabase database = mDbHelper.getWritableDatabase();
+
+        // Perform the update on the database and get the number of rows affected
+        int rowsUpdated = database.update(LicenceEntry.TABLE_NAME, values, selection, selectionArgs);
+
+        // If 1 or more rows were updated, then notify all listeners that the data at the
+        // given URI has changed
+        if (rowsUpdated != 0 && getContext() != null) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
+        // Return the number of rows updated
+        return rowsUpdated;
     }
 
     @Override
-    public int update(@NonNull Uri uri, @Nullable ContentValues contentValues, @Nullable String s, @Nullable String[] strings) {
+    public int delete(@NonNull Uri uri, @Nullable String s, @Nullable String[] strings) {
         return 0;
     }
 
