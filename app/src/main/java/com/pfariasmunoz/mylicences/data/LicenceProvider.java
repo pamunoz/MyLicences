@@ -1,12 +1,17 @@
 package com.pfariasmunoz.mylicences.data;
 
 import android.content.ContentProvider;
+import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+
+// Local imports
+import com.pfariasmunoz.mylicences.data.LicenceContract.LicenceEntry;
 
 /**
  * Created by Pablo Farias on 30-09-17.
@@ -55,7 +60,6 @@ public class LicenceProvider extends ContentProvider {
     /** Database helper object */
     private LicenceDbHelper mDbHelper;
 
-
     /**
      * Initialize the provider and the database helper object.
      */
@@ -69,8 +73,58 @@ public class LicenceProvider extends ContentProvider {
 
     @Nullable
     @Override
-    public Cursor query(@NonNull Uri uri, @Nullable String[] strings, @Nullable String s, @Nullable String[] strings1, @Nullable String s1) {
-        return null;
+    public Cursor query(
+            @NonNull Uri uri,
+            @Nullable String[] projection,
+            @Nullable String selection,
+            @Nullable String[] selectionArgs,
+            @Nullable String sortOrder) {
+
+        // Get readable database
+        SQLiteDatabase database = mDbHelper.getReadableDatabase();
+
+        // This cursor will hold the the result of the query
+        Cursor cursor;
+
+        // Find out if the uriMatcher can match the uri to a specific code.
+        int match = sUriMatcher.match(uri);
+
+        switch (match) {
+            case LICENCES:
+                // For the LICENCES code query directly the licences table with the given
+                // projection, selection, selection arguments, and sort order. The cursor could
+                // contain multiples rows of the licences table.
+                cursor = database.query(LicenceEntry.TABLE_NAME, projection, selection, selectionArgs,
+                        null, null, sortOrder);
+                break;
+            case LICENCE_ID:
+                // For the LICENCE_ID code, extract out the ID from the URI.
+                // for an example URI, such ass: "content://com.pfariasmunoz.mylicences/licences/3",
+                // the selection will be "_id=?" and the selection argument will be a
+                // String array containing the actual ID of 3 in this case.
+                //
+                // For every "?" in the selection, we need to have an element in the selection
+                // argument that will fill in the "?". Since we have one "?" in the selection
+                // we have 1 String in the selection arguments String array.
+                selection = LicenceEntry._ID + "=?";
+                selectionArgs = new String[] {String.valueOf(ContentUris.parseId(uri))};
+
+                // this will perform a query in the licences table where the id equals 3 to return a
+                // Cursor containing that row of the table.
+                cursor = database.query(LicenceEntry.TABLE_NAME, projection, selection, selectionArgs,
+                        null, null, sortOrder);
+                break;
+            default:
+                throw new IllegalArgumentException("Cannot query unknown uri: " + uri);
+        }
+        // Set the notification URI on the Cursor
+        // so we know what content URI the Cursor was created for.
+        // iF the data at this URI changes, then we know we need to update the cursor.
+        if (getContext() != null) {
+            cursor.setNotificationUri(getContext().getContentResolver(), uri);
+        }
+        // Return the Cursor.
+        return cursor;
     }
 
     @Nullable
