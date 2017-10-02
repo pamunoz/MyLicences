@@ -47,8 +47,14 @@ public class LicenceDbHelper extends SQLiteOpenHelper {
 
     }
 
+    /**
+     * This is called when the database needs to be upgraded.
+     */
     @Override
-    public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
+    public void onUpgrade(SQLiteDatabase database, int oldVersion, int newVersion) {
 
     }
+
+
+
 }
