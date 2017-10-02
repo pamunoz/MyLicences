@@ -55,9 +55,16 @@ public class LicenceProvider extends ContentProvider {
     /** Database helper object */
     private LicenceDbHelper mDbHelper;
 
+
+    /**
+     * Initialize the provider and the database helper object.
+     */
     @Override
     public boolean onCreate() {
-        return false;
+        // Make sure the variable is a global variable, so it can be referenced from other
+        // ContentProvider methods.
+        mDbHelper = new LicenceDbHelper(getContext());
+        return true;
     }
 
     @Nullable
