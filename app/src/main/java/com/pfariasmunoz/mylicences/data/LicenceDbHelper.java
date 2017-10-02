@@ -3,6 +3,7 @@ package com.pfariasmunoz.mylicences.data;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import com.pfariasmunoz.mylicences.data.LicenceContract.LicenceEntry;
 
 /**
  * Created by Pablo Farias on 30-09-17.
@@ -32,7 +33,17 @@ public class LicenceDbHelper extends SQLiteOpenHelper {
     }
 
     @Override
-    public void onCreate(SQLiteDatabase sqLiteDatabase) {
+    public void onCreate(SQLiteDatabase database) {
+        // Create a String that contains the SQL statement to create the licence table
+        String SQL_CREATE_LICENCE_TABLE =  "CREATE TABLE " + LicenceEntry.TABLE_NAME + " ("
+                + LicenceEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT, "
+                + LicenceEntry.COLUMN_LICENCE_NUMBER + " TEXT NOT NULL, "
+                + LicenceEntry.COLUMN_LICENCE_DURATION + " INTEGER NOT NULL DEFAULT 0, "
+                + LicenceEntry.COLUMN_LICENCE_START_DATE + " TEXT NOT NULL, "
+                + LicenceEntry.COLUMN_LICENCE_END_DATE + " TEXT NOT NULL);";
+
+        // Execute the SQL statement
+        database.execSQL(SQL_CREATE_LICENCE_TABLE);
 
     }
 
