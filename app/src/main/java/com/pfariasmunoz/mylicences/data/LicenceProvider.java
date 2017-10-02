@@ -14,7 +14,7 @@ import android.util.Log;
 // Local imports
 import com.pfariasmunoz.mylicences.data.LicenceContract.LicenceEntry;
 
-import static android.os.Build.VERSION_CODES.M;
+
 
 /**
  * {@link ContentProvider} for MyLicences app.
@@ -262,15 +262,63 @@ public class LicenceProvider extends ContentProvider {
         return rowsUpdated;
     }
 
+
+    /**
+     * Delete the data at the given selection and selection arguments.
+     */
     @Override
-    public int delete(@NonNull Uri uri, @Nullable String s, @Nullable String[] strings) {
-        return 0;
+    public int delete(@NonNull Uri uri,
+                      @Nullable String selection,
+                      @Nullable String[] selectionArgs) {
+        // Track the number of rows that were deleted
+        int rowsDeleted;
+
+        // Get writeable database
+        SQLiteDatabase database = mDbHelper.getWritableDatabase();
+
+        final int match = sUriMatcher.match(uri);
+
+        switch (match) {
+            case LICENCES:
+                // Delete all rows that match the selection and selection args
+                // For  case LICENCES:
+                rowsDeleted = database.delete(LicenceEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            case LICENCE_ID:
+                // Delete a single row given by the ID in the URI
+                selection = LicenceEntry._ID + "=?";
+                selectionArgs = new String[] {String.valueOf(ContentUris.parseId(uri))};
+                // For case LICENCE_ID:
+                // Delete a single row given by the ID in the URI
+                rowsDeleted = database.delete(LicenceEntry.TABLE_NAME, selection, selectionArgs);
+                break;
+            default:
+                throw new IllegalArgumentException("Deletion is not supported for " + uri);
+        }
+        // If 1 or more rows were deleted, then notify all listeners that the data at the
+        // given URI has changed
+        if (rowsDeleted != 0 && getContext() != null) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+        // Return the number of rows deleted
+        return rowsDeleted;
     }
 
+    /**
+     * Returns the MIME type of data for the content URI.
+     */
     @Nullable
     @Override
     public String getType(@NonNull Uri uri) {
-        return null;
+        final int match = sUriMatcher.match(uri);
+        switch (match) {
+            case LICENCES:
+                return LicenceEntry.CONTENT_LIST_TYPE;
+            case LICENCE_ID:
+                return LicenceEntry.CONTENT_ITEM_TYPE;
+            default:
+                throw new IllegalArgumentException("Unknown Uri " + uri + " with match " + match);
+        }
     }
 
     private <T> void checkForNull(T object, String message) {
