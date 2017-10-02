@@ -9,14 +9,16 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 // Local imports
 import com.pfariasmunoz.mylicences.data.LicenceContract.LicenceEntry;
 
-/**
- * Created by Pablo Farias on 30-09-17.
- */
+import static android.os.Build.VERSION_CODES.M;
 
+/**
+ * {@link ContentProvider} for MyLicences app.
+ */
 public class LicenceProvider extends ContentProvider {
 
     /** Tag for the log messages */
@@ -135,10 +137,46 @@ public class LicenceProvider extends ContentProvider {
         final int match = sUriMatcher.match(uri);
         switch (match) {
             case LICENCES:
-                return insert(uri, contentValues);
+                return insertLicence(uri, contentValues);
             default:
                 throw new IllegalArgumentException("Insertion is not supported for " + uri);
         }
+    }
+
+    /**
+     * Insert a licence into the database with the given content values. Return the new content URI
+     * for that specific row in the database.
+     */
+    private Uri insertLicence(Uri uri, ContentValues values) {
+        // Check that the number is not null
+        String number = values.getAsString(LicenceEntry.COLUMN_LICENCE_NUMBER);
+        checkForNull(number, "A Licence requires a number");
+        Integer duration = values.getAsInteger(LicenceEntry.COLUMN_LICENCE_DURATION);
+        checkForNull(duration, "A Licence requires a duration");
+        String startDate = values.getAsString(LicenceEntry.COLUMN_LICENCE_START_DATE);
+        checkForNull(startDate, "A Licence requires a start date");
+        String endDate = values.getAsString(LicenceEntry.COLUMN_LICENCE_END_DATE);
+        checkForNull(endDate, "A Licence requires a end date");
+
+        // Get writeable database
+        SQLiteDatabase database = mDbHelper.getWritableDatabase();
+
+        // Insert the new licence with the given values
+        long id = database.insert(LicenceEntry.TABLE_NAME, null, values);
+
+        // If the ID is -1, then the insertion failed. Log an error and return null.
+        if (id == -1) {
+            Log.e(LOG_TAG, "Failed to insert row for " + uri);
+            return null;
+        }
+
+        // Notify all listener that the data has change for the licence content URI
+        if (getContext() != null) {
+            getContext().getContentResolver().notifyChange(uri, null);
+        }
+
+        // Return the new URI with the ID (of the newly inserted row) appended at the end
+        return ContentUris.withAppendedId(uri, id);
     }
 
     @Override
@@ -155,5 +193,11 @@ public class LicenceProvider extends ContentProvider {
     @Override
     public String getType(@NonNull Uri uri) {
         return null;
+    }
+
+    private <T> void checkForNull(T object, String message) {
+        if (object == null) {
+            throw new IllegalArgumentException(message);
+        }
     }
 }
