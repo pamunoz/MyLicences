@@ -73,6 +73,7 @@ public class LicenceProvider extends ContentProvider {
         return true;
     }
 
+
     @Nullable
     @Override
     public Cursor query(
@@ -325,5 +326,9 @@ public class LicenceProvider extends ContentProvider {
         if (object == null) {
             throw new IllegalArgumentException(message);
         }
+    }
+
+    public LicenceDbHelper getDbOpenHelperForTest() {
+        return mDbHelper;
     }
 }

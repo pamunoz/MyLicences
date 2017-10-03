@@ -47,12 +47,20 @@ public class LicenceDbHelper extends SQLiteOpenHelper {
 
     }
 
+    public void dropAndRecreateTable(SQLiteDatabase database) {
+        dropTable(database);
+        onCreate(database);
+    }
+
+    public void dropTable(SQLiteDatabase database) {
+        database.execSQL("DROP TABLE IF EXISTS " + LicenceEntry.TABLE_NAME);
+    }
     /**
      * This is called when the database needs to be upgraded.
      */
     @Override
     public void onUpgrade(SQLiteDatabase database, int oldVersion, int newVersion) {
-
+        dropAndRecreateTable(database);
     }
 
 
