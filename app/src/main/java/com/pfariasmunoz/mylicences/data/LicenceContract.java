@@ -37,7 +37,7 @@ public class LicenceContract {
      * Inner class that defines constant values for the licences database table.
      * Each entry in the table represents a single licence.
      */
-    public static class LicenceEntry implements BaseColumns {
+    public static final class LicenceEntry implements BaseColumns {
         /**
          * The MIME type of the {@link #CONTENT_URI} for a list of pets.
          */
