@@ -1,9 +1,5 @@
 package com.pfariasmunoz.mylicences.data;
 
-/**
- * Created by Pablo Farias on 30-09-17.
- */
-
 import android.content.ContentResolver;
 import android.net.Uri;
 import android.provider.BaseColumns;
